@@ -38,7 +38,7 @@ describe('feed model (FeedModelTests port)', () => {
   it('freezes the answered page and opens the next below it', () => {
     const model = launch(memoryStore(), sourceOf(105), 7);
     const before = model.page(0)?.position.index;
-    model.setLiveGuessTopFraction(0.3);
+    model.setLiveGuessWhiteFraction(0.7);
     const guess = model.getState().liveGuess;
     expect(guess).not.toEqual(pawns(0));
     const accuracy = model.submit();
@@ -75,7 +75,7 @@ describe('feed model (FeedModelTests port)', () => {
     const store = memoryStore();
     const source = sourceOf(105);
     const first = launch(store, source, 3);
-    first.setLiveGuessTopFraction(0.25);
+    first.setLiveGuessWhiteFraction(0.75);
     const guess = first.getState().liveGuess;
     const answeredIndex = first.page(0)?.position.index;
     first.submit();
@@ -152,11 +152,11 @@ describe('feed model (FeedModelTests port)', () => {
 
   it('quantises and clamps guesses from the bar, the box and nudges', () => {
     const model = launch(memoryStore(), sourceOf(10), 2);
-    model.setLiveGuessTopFraction(0);
+    model.setLiveGuessWhiteFraction(1);
     expect(model.getState().liveGuess).toEqual(pawns(8));
-    model.setLiveGuessTopFraction(1);
+    model.setLiveGuessWhiteFraction(0);
     expect(model.getState().liveGuess).toEqual(pawns(-8));
-    model.setLiveGuessTopFraction(0.5);
+    model.setLiveGuessWhiteFraction(0.5);
     expect(model.getState().liveGuess).toEqual(pawns(0));
     model.nudgeLiveGuess(0.1);
     expect(model.getState().liveGuess).toEqual(pawns(0.1));

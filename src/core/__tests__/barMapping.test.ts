@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  barFraction,
   evalForWhiteFraction,
-  quantizedEvalForTopFraction,
   quantizedEvalForWhiteFraction,
   topFraction,
   whiteFraction,
+  whiteFractionForBar,
 } from '../barMapping';
 import { clampedPawns, mate, pawns } from '../eval';
 
@@ -72,12 +73,22 @@ describe('bar mapping (EvalBarMappingTests port)', () => {
     }
   });
 
-  it('measures the upright bar from the top, Black above', () => {
+  it('measures the upright bar from the top, Black above unless the board is flipped', () => {
     for (let x = -8; x <= 8; x += 0.5) {
-      expect(topFraction(pawns(x))).toBeCloseTo(1 - whiteFraction(pawns(x)), 12);
+      const e = pawns(x);
+      expect(topFraction(e)).toBeCloseTo(1 - whiteFraction(e), 12);
+      expect(barFraction(e, false)).toBeCloseTo(1 - whiteFraction(e), 12);
+      expect(barFraction(e, true)).toBeCloseTo(whiteFraction(e), 12);
+      for (const flipped of [false, true]) {
+        const back = whiteFractionForBar(barFraction(e, flipped), flipped);
+        expect(back).toBeCloseTo(whiteFraction(e), 12);
+      }
     }
-    expect(quantizedEvalForTopFraction(0)).toEqual(pawns(8));
-    expect(quantizedEvalForTopFraction(1)).toEqual(pawns(-8));
-    expect(quantizedEvalForTopFraction(0.5)).toEqual(pawns(0));
+    // White better sits above the middle normally, below it when Black is at the bottom.
+    expect(barFraction(pawns(1), false)).toBeLessThan(0.5);
+    expect(barFraction(pawns(1), true)).toBeGreaterThan(0.5);
+    // The top of the bar is White's extreme normally and Black's when flipped.
+    expect(quantizedEvalForWhiteFraction(whiteFractionForBar(0, false))).toEqual(pawns(8));
+    expect(quantizedEvalForWhiteFraction(whiteFractionForBar(0, true))).toEqual(pawns(-8));
   });
 });

@@ -1,5 +1,5 @@
 import { evaluate, type Accuracy } from '../core/accuracy';
-import { quantizedEvalForTopFraction } from '../core/barMapping';
+import { quantizedEvalForWhiteFraction } from '../core/barMapping';
 import { clampedPawns, evalEquals, pawns, quantizedPawns, ZERO, type Eval } from '../core/eval';
 import type { Position, PositionSource } from '../core/positions';
 import { pickIndex, type Random } from '../core/sequencer';
@@ -111,8 +111,9 @@ export class FeedModel {
 
   // Guessing
 
-  setLiveGuessTopFraction(fraction: number): void {
-    this.setLiveGuess(quantizedEvalForTopFraction(fraction));
+  /** From the bar: White's share of it, 0 to 1. The UI turns a pointer position into this. */
+  setLiveGuessWhiteFraction(fraction: number): void {
+    this.setLiveGuess(quantizedEvalForWhiteFraction(fraction));
   }
 
   setLiveGuessEval(value: Eval): void {

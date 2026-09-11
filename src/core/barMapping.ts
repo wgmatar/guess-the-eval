@@ -34,13 +34,22 @@ export function quantizedEvalForWhiteFraction(fraction: number): Eval {
 }
 
 /**
- * The bar stands upright beside the board, Black on top: distance from the top of the
- * bar to the divider, as a fraction.
+ * Distance from the top of the upright bar to the divider, as a fraction. The bar follows the
+ * board, as on Lichess: the side at the bottom of the board owns the bottom of the bar. Normally
+ * that is White, with Black on top; when Black is to move the board is flipped, and so is the bar.
+ * The numbers are always from White's side either way.
  */
-export function topFraction(e: Eval): number {
-  return 1 - whiteFraction(e);
+export function barFraction(e: Eval, flipped: boolean): number {
+  const white = whiteFraction(e);
+  return flipped ? white : 1 - white;
 }
 
-export function quantizedEvalForTopFraction(fraction: number): Eval {
-  return quantizedEvalForWhiteFraction(1 - fraction);
+/** White's share of the bar when its divider sits `fraction` of the way down. */
+export function whiteFractionForBar(fraction: number, flipped: boolean): number {
+  return flipped ? fraction : 1 - fraction;
+}
+
+/** The unflipped bar: Black on top. */
+export function topFraction(e: Eval): number {
+  return barFraction(e, false);
 }

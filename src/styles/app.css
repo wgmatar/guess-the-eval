@@ -212,6 +212,12 @@ body {
   background: var(--bar-black);
 }
 
+/* Black to move: the bar turns with the board, so Black's share grows from the bottom. */
+.bar.flipped .bar-black {
+  top: auto;
+  bottom: 0;
+}
+
 .answered .bar-black {
   transition: height var(--reveal-ms) var(--ease);
 }

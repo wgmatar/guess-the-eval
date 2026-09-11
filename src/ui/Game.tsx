@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { topFraction } from '../core/barMapping';
+import { barFraction, whiteFractionForBar } from '../core/barMapping';
 import {
   classifyDrag,
   pageOffset,
@@ -35,6 +35,8 @@ interface Drag {
   readonly startsGuess: boolean;
   /** Where on the bubble the pointer landed, so the bubble does not jump on contact. */
   readonly grab: number;
+  /** Black to move: the board and bar are flipped, so up on the bar is better for Black. */
+  readonly flipped: boolean;
   mode: DragMode;
   readonly samples: Sample[];
 }
@@ -117,7 +119,9 @@ export function Game({ model }: { readonly model: FeedModel }) {
     const s = model.getState();
     const live = stage === 'feed' && s.visible === s.historyCount && s.livePositionIndex !== null;
     const startsGuess = live && !interactive && inGuessRegion(layout, p.x, p.y);
-    const top = topFraction(s.liveGuess);
+    const livePage = live ? model.page(s.historyCount) : null;
+    const flipped = livePage?.position.sideToMove === 'b';
+    const top = barFraction(s.liveGuess, flipped);
     const grab =
       startsGuess && contains(bubbleHitRect(layout, top), p.x, p.y)
         ? p.y - bubbleCenter(layout, top).y
@@ -128,6 +132,7 @@ export function Game({ model }: { readonly model: FeedModel }) {
       y0: p.y,
       startsGuess,
       grab,
+      flipped,
       mode: 'undecided',
       samples: [p],
     };
@@ -149,7 +154,9 @@ export function Game({ model }: { readonly model: FeedModel }) {
       if (d.mode === 'page' || d.mode === 'stage') setDragging(d.mode);
     }
     if (d.mode === 'guess') {
-      model.setLiveGuessTopFraction(topFractionForY(layout, p.y - d.grab));
+      model.setLiveGuessWhiteFraction(
+        whiteFractionForBar(topFractionForY(layout, p.y - d.grab), d.flipped),
+      );
     } else if (d.mode === 'page') {
       setPageDrag(pageOffset(dy, model.getState().visible, model.lastPage, layout.pageH));
     } else if (d.mode === 'stage') {
@@ -177,7 +184,9 @@ export function Game({ model }: { readonly model: FeedModel }) {
       if (!cancelled) setStage(settleStage(p.x - d.x0, vx, stage, layout.pageW));
     } else if (d.mode === 'undecided' && d.startsGuess && !cancelled) {
       // A plain click beside the board puts the guess there.
-      model.setLiveGuessTopFraction(topFractionForY(layout, p.y - d.grab));
+      model.setLiveGuessWhiteFraction(
+        whiteFractionForBar(topFractionForY(layout, p.y - d.grab), d.flipped),
+      );
     }
   });
 

@@ -9,7 +9,8 @@ copyleft obligation.
 
 `tools/fetch_pieces.py` takes the SVGs from `lichess-org/lila` (`public/piece/cburnett`), whose
 path data is identical to the Wikimedia originals. Only the colour tokens are substituted; the
-shapes are unchanged.
+shapes are unchanged. Each black piece also has a rim variant that repeats the same shapes in
+ivory beneath the piece, for black pieces on dark squares.
 
 ```
 Copyright (c) 2006, Colin M.L. Burnett

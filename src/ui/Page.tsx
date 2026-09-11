@@ -1,6 +1,6 @@
 import { useState, type RefObject } from 'react';
 import type { Accuracy } from '../core/accuracy';
-import { topFraction } from '../core/barMapping';
+import { barFraction } from '../core/barMapping';
 import { resolveBubbles } from '../core/bubbleLayout';
 import { display, spoken, type Eval } from '../core/eval';
 import { bubbleCenter, SIZES, type PageLayout } from '../core/layout';
@@ -46,8 +46,10 @@ export function Page(props: Props) {
   const [mountedLive] = useState(!answered);
   const { position, accuracy } = page;
   const guess = page.submittedGuess ?? props.liveGuess;
-  const guessTop = topFraction(guess);
-  const dividerTop = answered ? topFraction(position.eval) : guessTop;
+  // Black to move: the board is seen from Black's side and the bar turns with it, as on Lichess.
+  const flipped = position.sideToMove === 'b';
+  const guessTop = barFraction(guess, flipped);
+  const dividerTop = answered ? barFraction(position.eval, flipped) : guessTop;
 
   let bubbles: BubbleSpec[] = [
     { key: 'guess', kind: 'guess', text: display(guess), top: guessTop, pop: false },
@@ -55,7 +57,7 @@ export function Page(props: Props) {
   if (answered && accuracy) {
     const resolution = resolveBubbles({
       guessTop,
-      actualTop: topFraction(position.eval),
+      actualTop: barFraction(position.eval, flipped),
       accuracy,
       barHeight: l.bar.height,
       bubbleHeight: SIZES.bubbleH,
@@ -111,10 +113,14 @@ export function Page(props: Props) {
         size={l.board.width}
         x={l.board.x}
         y={l.board.y}
+        flipped={flipped}
         label={`Chess position, ${turn ?? 'side to move unknown'}`}
       />
-      <div className="bar" style={rectStyle(l.bar)} aria-hidden="true">
-        <div className="bar-black" style={{ height: `${dividerTop * 100}%` }} />
+      <div className={flipped ? 'bar flipped' : 'bar'} style={rectStyle(l.bar)} aria-hidden="true">
+        <div
+          className="bar-black"
+          style={{ height: `${(flipped ? 1 - dividerTop : dividerTop) * 100}%` }}
+        />
       </div>
       {bubbles.map((b) => {
         const c = bubbleCenter(l, b.top);

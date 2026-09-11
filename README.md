@@ -4,7 +4,8 @@
 
 A chess position from an elite classical game appears. You guess the engine's evaluation
 (in pawns, from White's side) by typing it or dragging the eval bar beside the board, then
-submit. The bar springs to the truth and your guess turns gold (spot on), green (close) or
+submit. The board faces the side to move, and the eval bar turns with it, as on Lichess; the
+numbers are always from White's side. The bar springs to the truth and your guess turns gold (spot on), green (close) or
 red (off). The feed never ends and never repeats a position until you have seen them all;
 everything you answered stays browsable above the live position, frozen as you left it.
 Once a position is answered, a link opens the source game on Lichess at that exact move.
@@ -16,7 +17,7 @@ players rated 2500+ that were broadcast on Lichess. The evaluations are Lichess'
 
 | | Keyboard | Mouse / touch |
 |---|---|---|
-| Guess | type a number: `1.3`, `-0.45`, `+2` (clamped to ±8) | drag the bar or its bubble; up is better for White |
+| Guess | type a number: `1.3`, `-0.45`, `+2` (clamped to ±8) | drag the bar or its bubble; the end nearer a side's pieces is better for that side |
 | Submit | <kbd>Enter</kbd> | **Submit** |
 | Next position | <kbd>Enter</kbd>, <kbd>↓</kbd> or <kbd>S</kbd> | **Next**, or swipe up on the board |
 | Previous (answered) positions | <kbd>↑</kbd> or <kbd>W</kbd> | swipe down, or scroll |
