@@ -1,5 +1,5 @@
 /**
- * The only user data the app keeps, in exactly four `localStorage` keys. When storage is
+ * The only user data the app keeps, in exactly five `localStorage` keys. When storage is
  * unavailable (a private window, blocked site data, a full quota) the app keeps working
  * in memory and says so once in the console.
  */
@@ -15,6 +15,7 @@ export const KEYS = {
   stats: `${PREFIX}stats`,
   answered: `${PREFIX}answered`,
   history: `${PREFIX}history`,
+  sound: `${PREFIX}sound`,
 } as const;
 
 export function memoryStore(initial: Record<string, string> = {}): KeyValueStore & {

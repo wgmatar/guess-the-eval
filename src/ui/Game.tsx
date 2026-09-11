@@ -30,10 +30,14 @@ import {
   type Shape,
   type Square,
 } from '../core/shapes';
+import type { Accuracy } from '../core/accuracy';
 import type { FeedModel } from '../store/feedModel';
+import type { SoundSetting } from '../store/soundSetting';
 import { useElementSize, useMediaQuery, useSettled } from './hooks';
 import { Page } from './Page';
 import { PieceDefs } from './PieceDefs';
+import { playReveal } from './sound';
+import { SoundIcon } from './SoundIcon';
 import { Stats } from './Stats';
 import { durations, rectStyle } from './style';
 
@@ -75,7 +79,13 @@ const SUBMIT_LOCK_MS = 250;
  * One pointer classifier serves the guess, the feed and the stage; one keyboard router
  * serves the typed flow (type, Enter to submit, Enter to move on).
  */
-export function Game({ model }: { readonly model: FeedModel }) {
+export function Game({
+  model,
+  sound,
+}: {
+  readonly model: FeedModel;
+  readonly sound: SoundSetting;
+}) {
   const state = useSyncExternalStore(model.subscribe, model.getState);
   const [column, setColumn] = useState<HTMLDivElement | null>(null);
   const size = useElementSize(column);
@@ -102,13 +112,25 @@ export function Game({ model }: { readonly model: FeedModel }) {
   // Shapes live per page, in memory only; page indices never change, so paging keeps them.
   const [shapes, setShapes] = useState<ReadonlyMap<number, readonly Shape[]>>(() => new Map());
   const [drawing, setDrawing] = useState<Drawing | null>(null);
+  const [soundOn, setSoundOn] = useState(sound.on);
+
+  /** The live page was just answered, in front of the player, inside their key press or click. */
+  const reveal = (accuracy: Accuracy) => {
+    if (sound.on) playReveal(accuracy);
+  };
+
+  const toggleSound = () => {
+    sound.set(!sound.on);
+    setSoundOn(sound.on);
+  };
 
   const submit = () => {
     const now = performance.now();
     const s = model.getState();
     if (now < lockUntil.current || stage !== 'feed' || s.visible !== s.historyCount) return;
     lockUntil.current = now + SUBMIT_LOCK_MS;
-    model.submit();
+    const accuracy = model.submit();
+    if (accuracy) reveal(accuracy);
   };
 
   const pageTo = (target: number) => {
@@ -453,12 +475,25 @@ export function Game({ model }: { readonly model: FeedModel }) {
             >
               Stats
             </button>
+            <button
+              type="button"
+              className="sound-toggle"
+              style={rectStyle(layout.sound)}
+              onClick={toggleSound}
+              aria-pressed={soundOn}
+              aria-label="Sound"
+              title={soundOn ? 'Sound on' : 'Sound off'}
+            >
+              <SoundIcon on={soundOn} />
+            </button>
           </main>
           <Stats
             stats={state.stats}
             inert={stage !== 'stats'}
             style={{ left: layout.pageW, width: layout.pageW }}
             onBack={closeStats}
+            soundOn={soundOn}
+            onToggleSound={toggleSound}
           />
         </div>
       )}

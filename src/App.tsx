@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { loadModel } from './boot';
 import type { FeedModel } from './store/feedModel';
+import type { SoundSetting } from './store/soundSetting';
 import { Game } from './ui/Game';
 
 type Boot =
   | { readonly status: 'loading' }
   | { readonly status: 'error'; readonly message: string }
-  | { readonly status: 'ready'; readonly model: FeedModel };
+  | { readonly status: 'ready'; readonly model: FeedModel; readonly sound: SoundSetting };
 
 export function App() {
   const [boot, setBoot] = useState<Boot>({ status: 'loading' });
@@ -14,8 +15,8 @@ export function App() {
   useEffect(() => {
     let cancelled = false;
     loadModel().then(
-      (model) => {
-        if (!cancelled) setBoot({ status: 'ready', model });
+      ({ model, sound }) => {
+        if (!cancelled) setBoot({ status: 'ready', model, sound });
       },
       (error: unknown) => {
         if (!cancelled) {
@@ -31,7 +32,7 @@ export function App() {
     };
   }, []);
 
-  if (boot.status === 'ready') return <Game model={boot.model} />;
+  if (boot.status === 'ready') return <Game model={boot.model} sound={boot.sound} />;
 
   return (
     <div className="app">

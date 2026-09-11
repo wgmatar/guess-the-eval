@@ -6,6 +6,8 @@ interface Props {
   readonly inert: boolean;
   readonly style: CSSProperties;
   readonly onBack: () => void;
+  readonly soundOn: boolean;
+  readonly onToggleSound: () => void;
 }
 
 const number = new Intl.NumberFormat();
@@ -20,7 +22,7 @@ function Row({ label, spoken, value }: { label: string; spoken: string; value: n
 }
 
 /** Four numbers on a quiet page, and nothing that congratulates you. */
-export function Stats({ stats, inert, style, onBack }: Props) {
+export function Stats({ stats, inert, style, onBack, soundOn, onToggleSound }: Props) {
   return (
     <section className="stats-page" style={style} inert={inert} aria-labelledby="stats-title">
       <div className="stats-inner">
@@ -39,6 +41,24 @@ export function Stats({ stats, inert, style, onBack }: Props) {
         <dl>
           <Row label="Solved" spoken="Positions solved" value={stats.solved} />
           <Row label="Answered" spoken="Positions answered" value={stats.answered} />
+        </dl>
+
+        <h2>Settings</h2>
+        <dl>
+          <div className="stat-row">
+            <dt id="sound-label">Sound</dt>
+            <dd>
+              <button
+                type="button"
+                className="capsule setting"
+                aria-labelledby="sound-label"
+                aria-pressed={soundOn}
+                onClick={onToggleSound}
+              >
+                {soundOn ? 'On' : 'Off'}
+              </button>
+            </dd>
+          </div>
         </dl>
 
         <div className="about">

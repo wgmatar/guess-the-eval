@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { AnsweredSet } from '../answeredSet';
 import { AnswerStore, HISTORY_CAP } from '../answerStore';
 import { EMPTY_STATS, StatsStore } from '../statsStore';
+import { SoundSetting } from '../soundSetting';
 import { clearAll, KEYS, memoryStore } from '../storage';
 
 describe('answered set', () => {
@@ -119,15 +120,29 @@ describe('answer store', () => {
     expect(shrunk.answered.contains(150)).toBe(false);
   });
 
-  it('writes nothing outside the four keys, and ?reset clears them', () => {
+  it('writes nothing outside the five keys, and ?reset clears them', () => {
     const store = memoryStore();
     const a = new AnswerStore(store, 'd1', 10);
     a.append({ p: 1, g: 0, t: 0 });
     new StatsStore(store).record('off');
+    new SoundSetting(store).set(false);
     expect([...store.entries.keys()].sort()).toEqual(
-      [KEYS.answered, KEYS.dataset, KEYS.history, KEYS.stats].sort(),
+      [KEYS.answered, KEYS.dataset, KEYS.history, KEYS.sound, KEYS.stats].sort(),
     );
     clearAll(store);
     expect(store.entries.size).toBe(0);
+  });
+});
+
+describe('SoundSetting', () => {
+  it('is on by default, remembers off, and forgets it on reset', () => {
+    const store = memoryStore();
+    expect(new SoundSetting(store).on).toBe(true);
+    new SoundSetting(store).set(false);
+    expect(new SoundSetting(store).on).toBe(false);
+    new SoundSetting(store).set(true);
+    expect(new SoundSetting(store).on).toBe(true);
+    clearAll(store);
+    expect(new SoundSetting(store).on).toBe(true);
   });
 });

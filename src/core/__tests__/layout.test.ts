@@ -49,7 +49,8 @@ describe('page layout (vertical bar)', () => {
   it('keeps the title clear of the Stats link', () => {
     for (const w of WIDTHS) {
       const l = computeLayout(w, 874);
-      expect(l.title.x + l.title.width).toBeLessThanOrEqual(l.stats.x);
+      expect(l.title.x + l.title.width).toBeLessThanOrEqual(l.sound.x);
+      expect(l.sound.x + l.sound.width).toBeLessThanOrEqual(l.stats.x);
     }
   });
 

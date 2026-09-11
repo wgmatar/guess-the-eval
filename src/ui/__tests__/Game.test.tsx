@@ -5,6 +5,7 @@ import { pawns } from '../../core/eval';
 import { computeLayout } from '../../core/layout';
 import { PositionSource } from '../../core/positions';
 import { launch, makeDataset } from '../../store/__tests__/fixtures';
+import { SoundSetting } from '../../store/soundSetting';
 import { memoryStore } from '../../store/storage';
 import { Game } from '../Game';
 
@@ -42,9 +43,10 @@ const wait = (ms: number) => act(() => new Promise((resolve) => setTimeout(resol
 function setup() {
   const source = new PositionSource(makeDataset(30, 'test', () => 1.3));
   const model = launch(memoryStore(), source, 5);
-  render(<Game model={model} />);
+  const sound = new SoundSetting(memoryStore());
+  render(<Game model={model} sound={sound} />);
   const input = () => screen.getByLabelText(/your guess/i) as HTMLInputElement;
-  return { model, input };
+  return { model, input, sound };
 }
 
 describe('Game keyboard flow', () => {
@@ -106,6 +108,29 @@ describe('Game keyboard flow', () => {
     expect(stats?.hasAttribute('inert')).toBe(false);
     fireEvent.keyDown(document.body, { key: 'Escape' });
     expect(stats?.hasAttribute('inert')).toBe(true);
+  });
+});
+
+describe('Game sound', () => {
+  it('toggles sound from the speaker and from Stats, and remembers it', () => {
+    const { sound } = setup();
+    const speaker = document.querySelector('.sound-toggle')!;
+    expect(speaker.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(speaker);
+    expect(sound.on).toBe(false);
+    expect(speaker.getAttribute('aria-pressed')).toBe('false');
+    const row = document.querySelector('.stats-page .setting')!;
+    expect(row.textContent).toBe('Off');
+    fireEvent.click(row);
+    expect(sound.on).toBe(true);
+    expect(speaker.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('submits without Web Audio, as in browsers that lack it', async () => {
+    const { model, input } = setup();
+    await wait(20);
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(model.getState().historyCount).toBe(1);
   });
 });
 

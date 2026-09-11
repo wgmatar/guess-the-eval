@@ -6,7 +6,7 @@ A chess position from an elite classical game appears. You guess the engine's ev
 (in pawns, from White's side) by typing it or dragging the eval bar beside the board, then
 submit. The board faces the side to move, and the eval bar turns with it, as on Lichess; the
 numbers are always from White's side. The bar springs to the truth and your guess turns gold (spot on), green (close) or
-red (off). The feed never ends and never repeats a position until you have seen them all;
+red (off), each with its own short sound. The feed never ends and never repeats a position until you have seen them all;
 everything you answered stays browsable above the live position, frozen as you left it.
 Once a position is answered, a link opens the source game on Lichess at that exact move.
 
@@ -22,6 +22,7 @@ players rated 2500+ that were broadcast on Lichess. The evaluations are Lichess'
 | Next position | <kbd>Enter</kbd>, <kbd>↓</kbd> or <kbd>S</kbd> | **Next**, or swipe up on the board |
 | Previous (answered) positions | <kbd>↑</kbd> or <kbd>W</kbd> | swipe down, or scroll |
 | Stats | **Stats** link; <kbd>Esc</kbd> to return | swipe left; right to return |
+| Sound | the speaker beside **Stats**, or the row on the Stats page | the same |
 | Arrows and circles | | right-drag on the board for an arrow, right-click for a circle; hold <kbd>Shift</kbd> for red, <kbd>Alt</kbd> for blue, both for yellow; the same shape again removes it; a left click on the board clears them |
 
 There is no skipping: the live position must be answered before the next one appears.
@@ -40,7 +41,8 @@ A streak counts gold and green answers in a row.
 ## Privacy
 
 There are no accounts and no server. Progress lives only in your browser's `localStorage`,
-in four keys: `gte.v1.dataset`, `gte.v1.stats`, `gte.v1.answered`, `gte.v1.history`.
+in five keys: `gte.v1.dataset`, `gte.v1.stats`, `gte.v1.answered`, `gte.v1.history`, and
+`gte.v1.sound` (whether the reveal plays a sound).
 Add `?reset` to the URL to clear them. `?seed=N` makes the order of positions reproducible.
 
 ## Development

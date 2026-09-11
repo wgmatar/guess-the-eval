@@ -23,6 +23,8 @@ export interface PageLayout {
   readonly titleLineHeight: number;
   readonly title: Rect;
   readonly stats: Rect;
+  /** The speaker button, left of Stats. */
+  readonly sound: Rect;
   readonly board: Rect;
   readonly bar: Rect;
   readonly barCenterX: number;
@@ -48,6 +50,7 @@ export const SIZES = {
   inputGap: 10,
   statsW: 52,
   statsH: 32,
+  soundW: 32,
 } as const;
 
 /** Wide enough that a bubble centred on the bar never crosses the board's edge. */
@@ -80,7 +83,8 @@ export function computeLayout(pageW: number, pageH: number, titleLineHeight = 18
     width: S.statsW,
     height: S.statsH,
   };
-  const titleW = Math.max(0, Math.min(blockW, stats.x - 8 - boardX));
+  const sound: Rect = { x: stats.x - 4 - S.soundW, y: stats.y, width: S.soundW, height: S.statsH };
+  const titleW = Math.max(0, Math.min(blockW, sound.x - 8 - boardX));
   const inputW = Math.min(S.inputW, Math.max(0, Math.floor(blockW * 0.5)));
 
   return {
@@ -89,6 +93,7 @@ export function computeLayout(pageW: number, pageH: number, titleLineHeight = 18
     titleLineHeight,
     title: { x: boardX, y: titleY, width: titleW, height: titleHeight },
     stats,
+    sound,
     board: { x: boardX, y: boardY, width: boardSide, height: boardSide },
     bar: { x: barX, y: boardY, width: S.barWidth, height: boardSide },
     barCenterX: barX + S.barWidth / 2,
