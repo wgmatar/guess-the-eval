@@ -195,6 +195,13 @@ body {
   display: block;
 }
 
+/* Arrows and circles, above the board; they never take the pointer. */
+.shapes {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
 /* The eval bar stands beside the board: Black on top, White below. */
 .bar {
   position: absolute;

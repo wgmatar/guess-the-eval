@@ -21,6 +21,15 @@ import {
   inGuessRegion,
   topFractionForY,
 } from '../core/layout';
+import {
+  brushFor,
+  snappedSquareAt,
+  squareAt,
+  toggleShape,
+  type Brush,
+  type Shape,
+  type Square,
+} from '../core/shapes';
 import type { FeedModel } from '../store/feedModel';
 import { useElementSize, useMediaQuery, useSettled } from './hooks';
 import { Page } from './Page';
@@ -41,6 +50,21 @@ interface Drag {
   readonly samples: Sample[];
 }
 
+/** A right-button drag on the board, drawing an arrow or a circle as on Lichess. */
+interface Draw {
+  readonly id: number;
+  readonly page: number;
+  readonly orig: Square;
+  readonly brush: Brush;
+  readonly flipped: boolean;
+  /** Snaps the head to queen and knight moves until the pointer leaves the board. */
+  snap: boolean;
+  square: Square | null;
+}
+
+type Drawing = Shape & { readonly page: number };
+
+const NO_SHAPES: readonly Shape[] = [];
 const INTERACTIVE = 'input, button, a, select, textarea';
 const NUMERIC_KEY = /^[0-9.,+\-−]$/;
 /** After a submit, paging waits this long, so a double Enter cannot skip the reveal. */
@@ -73,6 +97,11 @@ export function Game({ model }: { readonly model: FeedModel }) {
   const wheel = useRef<WheelPager | null>(null);
   const suppressClick = useRef(false);
   const lockUntil = useRef(0);
+  const draw = useRef<Draw | null>(null);
+  const drawEndedAt = useRef(-Infinity);
+  // Shapes live per page, in memory only; page indices never change, so paging keeps them.
+  const [shapes, setShapes] = useState<ReadonlyMap<number, readonly Shape[]>>(() => new Map());
+  const [drawing, setDrawing] = useState<Drawing | null>(null);
 
   const submit = () => {
     const now = performance.now();
@@ -108,8 +137,50 @@ export function Game({ model }: { readonly model: FeedModel }) {
     return { x: e.clientX - (r?.left ?? 0), y: e.clientY - (r?.top ?? 0), t: e.timeStamp };
   };
 
+  const drawingShape = (d: Draw): Drawing => ({
+    page: d.page,
+    orig: d.orig,
+    dest: d.square && d.square !== d.orig ? d.square : null,
+    brush: d.brush,
+  });
+
+  const cancelDraw = () => {
+    draw.current = null;
+    drawEndedAt.current = performance.now();
+    setDrawing(null);
+  };
+
+  /** Right button on the board: start an arrow or circle, with the brush the modifiers pick. */
+  const startDraw = (e: PointerEvent) => {
+    if (!layout || !column || stage !== 'feed') return;
+    const p = localPoint(e);
+    const visible = model.getState().visible;
+    const page = model.page(visible);
+    if (!page) return;
+    const flipped = page.position.sideToMove === 'b';
+    const orig = squareAt(layout.board, p.x, p.y, flipped);
+    if (!orig) return;
+    e.preventDefault();
+    column.setPointerCapture(e.pointerId);
+    const d: Draw = {
+      id: e.pointerId,
+      page: visible,
+      orig,
+      brush: brushFor(e),
+      flipped,
+      snap: true,
+      square: orig,
+    };
+    draw.current = d;
+    setDrawing(drawingShape(d));
+  };
+
   const onPointerDown = useEffectEvent((e: PointerEvent) => {
-    if (!layout || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    if (!layout) return;
+    // Any other press while drawing abandons the shape, as on Lichess.
+    if (draw.current) return cancelDraw();
+    if (e.pointerType === 'mouse' && e.button === 2) return startDraw(e);
+    if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     const target = e.target instanceof Element ? e.target : null;
     const interactive = !!target?.closest(INTERACTIVE);
     // Keeps focus in the eval box and stops text selection while the board is dragged.
@@ -117,6 +188,14 @@ export function Game({ model }: { readonly model: FeedModel }) {
     suppressClick.current = false;
     const p = localPoint(e);
     const s = model.getState();
+    // A left click on the board clears its arrows and circles.
+    if (stage === 'feed' && contains(layout.board, p.x, p.y) && shapes.has(s.visible)) {
+      setShapes((m) => {
+        const next = new Map(m);
+        next.delete(s.visible);
+        return next;
+      });
+    }
     const live = stage === 'feed' && s.visible === s.historyCount && s.livePositionIndex !== null;
     const startsGuess = live && !interactive && inGuessRegion(layout, p.x, p.y);
     const livePage = live ? model.page(s.historyCount) : null;
@@ -139,6 +218,19 @@ export function Game({ model }: { readonly model: FeedModel }) {
   });
 
   const onPointerMove = useEffectEvent((e: PointerEvent) => {
+    const w = draw.current;
+    if (w) {
+      if (e.pointerId !== w.id || !layout) return;
+      const p = localPoint(e);
+      const under = squareAt(layout.board, p.x, p.y, w.flipped);
+      if (!under) w.snap = false;
+      const square = w.snap ? snappedSquareAt(layout.board, w.orig, p.x, p.y, w.flipped) : under;
+      if (square !== w.square) {
+        w.square = square;
+        setDrawing(drawingShape(w));
+      }
+      return;
+    }
     const d = drag.current;
     if (!d || e.pointerId !== d.id || !layout || !column) return;
     const p = localPoint(e);
@@ -165,6 +257,15 @@ export function Game({ model }: { readonly model: FeedModel }) {
   });
 
   const onPointerEnd = useEffectEvent((e: PointerEvent, cancelled: boolean) => {
+    const w = draw.current;
+    if (w) {
+      if (e.pointerId !== w.id) return;
+      cancelDraw();
+      if (cancelled || !w.square) return;
+      const shape: Shape = drawingShape(w);
+      setShapes((m) => new Map(m).set(w.page, toggleShape(m.get(w.page) ?? NO_SHAPES, shape)));
+      return;
+    }
     const d = drag.current;
     if (!d || e.pointerId !== d.id) return;
     drag.current = null;
@@ -254,6 +355,12 @@ export function Game({ model }: { readonly model: FeedModel }) {
     const cancel = (e: PointerEvent) => onPointerEnd(e, true);
     const wheelHandler = (e: WheelEvent) => onWheel(e);
     const key = (e: KeyboardEvent) => onKeyDown(e);
+    // No browser menu for a right click on the board, or for the end of a drawn arrow.
+    const menu = (e: MouseEvent) => {
+      const target = e.target instanceof Element ? e.target : null;
+      const recent = performance.now() - drawEndedAt.current < 500;
+      if (draw.current || recent || target?.closest('.board')) e.preventDefault();
+    };
     // The click that follows a drag must not press whatever the pointer ended on.
     const click = (e: MouseEvent) => {
       if (!suppressClick.current || e.detail === 0) return;
@@ -267,6 +374,7 @@ export function Game({ model }: { readonly model: FeedModel }) {
     column.addEventListener('pointercancel', cancel);
     column.addEventListener('click', click, true);
     column.addEventListener('wheel', wheelHandler, { passive: false });
+    column.addEventListener('contextmenu', menu);
     document.addEventListener('keydown', key);
     return () => {
       column.removeEventListener('pointerdown', down);
@@ -275,6 +383,7 @@ export function Game({ model }: { readonly model: FeedModel }) {
       column.removeEventListener('pointercancel', cancel);
       column.removeEventListener('click', click, true);
       column.removeEventListener('wheel', wheelHandler);
+      column.removeEventListener('contextmenu', menu);
       document.removeEventListener('keydown', key);
     };
   }, [column]);
@@ -326,6 +435,8 @@ export function Game({ model }: { readonly model: FeedModel }) {
                       finePointer={finePointer}
                       showHint={state.historyCount === 0}
                       inputRef={inputRef}
+                      shapes={shapes.get(i) ?? NO_SHAPES}
+                      drawing={drawing?.page === i ? drawing : null}
                       onGuess={(value) => model.setLiveGuessEval(value)}
                       onSubmit={submit}
                       onNext={() => pageTo(i + 1)}

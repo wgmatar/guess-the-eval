@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { pawns } from '../../core/eval';
+import { computeLayout } from '../../core/layout';
 import { PositionSource } from '../../core/positions';
 import { launch, makeDataset } from '../../store/__tests__/fixtures';
 import { memoryStore } from '../../store/storage';
@@ -21,6 +22,7 @@ beforeAll(() => {
     configurable: true,
     get: () => 800,
   });
+  HTMLElement.prototype.setPointerCapture = () => {};
   window.matchMedia = ((query: string) => ({
     matches: query.includes('pointer: fine'),
     media: query,
@@ -104,5 +106,42 @@ describe('Game keyboard flow', () => {
     expect(stats?.hasAttribute('inert')).toBe(false);
     fireEvent.keyDown(document.body, { key: 'Escape' });
     expect(stats?.hasAttribute('inert')).toBe(true);
+  });
+});
+
+describe('Game drawing', () => {
+  const board = computeLayout(393, 800).board;
+  const unit = board.width / 8;
+  /** Page coordinates of the centre of the square in drawn column c, row r. */
+  const at = (c: number, r: number) => ({
+    clientX: board.x + (c + 0.5) * unit,
+    clientY: board.y + (r + 0.5) * unit,
+  });
+  const mouse = { pointerType: 'mouse', pointerId: 1, isPrimary: true };
+
+  it('draws a circle and an arrow with the right button, and a left click clears them', () => {
+    setup();
+    const svg = document.querySelector('.board')!;
+    fireEvent.pointerDown(svg, { ...mouse, button: 2, ...at(4, 6) });
+    fireEvent.pointerUp(svg, { ...mouse, button: 2, ...at(4, 6) });
+    expect(document.querySelectorAll('.shapes circle')).toHaveLength(1);
+
+    fireEvent.pointerDown(svg, { ...mouse, button: 2, shiftKey: true, ...at(4, 6) });
+    fireEvent.pointerMove(svg, { ...mouse, buttons: 2, ...at(4, 4) });
+    fireEvent.pointerUp(svg, { ...mouse, button: 2, ...at(4, 4) });
+    expect(document.querySelectorAll('.shapes circle')).toHaveLength(1);
+    expect(document.querySelector('.shapes line')?.getAttribute('stroke')).toBe('#882020');
+
+    // Drawing the same circle again removes it.
+    fireEvent.pointerDown(svg, { ...mouse, button: 2, ...at(4, 6) });
+    fireEvent.pointerUp(svg, { ...mouse, button: 2, ...at(4, 6) });
+    expect(document.querySelectorAll('.shapes circle')).toHaveLength(0);
+
+    const menu = fireEvent.contextMenu(svg);
+    expect(menu).toBe(false);
+
+    fireEvent.pointerDown(svg, { ...mouse, button: 0, ...at(1, 1) });
+    fireEvent.pointerUp(svg, { ...mouse, button: 0, ...at(1, 1) });
+    expect(document.querySelector('.shapes')).toBeNull();
   });
 });

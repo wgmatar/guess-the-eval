@@ -5,10 +5,12 @@ import { resolveBubbles } from '../core/bubbleLayout';
 import { display, spoken, type Eval } from '../core/eval';
 import { bubbleCenter, SIZES, type PageLayout } from '../core/layout';
 import { lichessUrl, positionTitle, sideLabel } from '../core/positions';
+import type { Shape } from '../core/shapes';
 import type { PageState } from '../store/feedModel';
 import { Board } from './Board';
 import { GuessInput } from './GuessInput';
 import type { BubbleKind } from './palette';
+import { Shapes } from './Shapes';
 import { rectStyle } from './style';
 
 interface Props {
@@ -20,6 +22,9 @@ interface Props {
   readonly finePointer: boolean;
   readonly showHint: boolean;
   readonly inputRef: RefObject<HTMLInputElement | null>;
+  /** Arrows and circles drawn on this page, and the one being drawn. */
+  readonly shapes: readonly Shape[];
+  readonly drawing: Shape | null;
   readonly onGuess: (value: Eval) => void;
   readonly onSubmit: () => void;
   readonly onNext: () => void;
@@ -115,6 +120,14 @@ export function Page(props: Props) {
         y={l.board.y}
         flipped={flipped}
         label={`Chess position, ${turn ?? 'side to move unknown'}`}
+      />
+      <Shapes
+        shapes={props.shapes}
+        current={props.drawing}
+        size={l.board.width}
+        x={l.board.x}
+        y={l.board.y}
+        flipped={flipped}
       />
       <div className={flipped ? 'bar flipped' : 'bar'} style={rectStyle(l.bar)} aria-hidden="true">
         <div

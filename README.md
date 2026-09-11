@@ -22,6 +22,7 @@ players rated 2500+ that were broadcast on Lichess. The evaluations are Lichess'
 | Next position | <kbd>Enter</kbd>, <kbd>↓</kbd> or <kbd>S</kbd> | **Next**, or swipe up on the board |
 | Previous (answered) positions | <kbd>↑</kbd> or <kbd>W</kbd> | swipe down, or scroll |
 | Stats | **Stats** link; <kbd>Esc</kbd> to return | swipe left; right to return |
+| Arrows and circles | | right-drag on the board for an arrow, right-click for a circle; hold <kbd>Shift</kbd> for red, <kbd>Alt</kbd> for blue, both for yellow; the same shape again removes it; a left click on the board clears them |
 
 There is no skipping: the live position must be answered before the next one appears.
 
