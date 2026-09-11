@@ -9,8 +9,8 @@ red (off). The feed never ends and never repeats a position until you have seen 
 everything you answered stays browsable above the live position, frozen as you left it.
 Once a position is answered, a link opens the source game on Lichess at that exact move.
 
-About 25,000 positions come from classical games between players rated 2500+ that were
-broadcast on Lichess. The evaluations are Lichess's own Stockfish analysis of each move.
+11,472 positions from 3,937 games in 51 tournaments come from classical games between
+players rated 2500+ that were broadcast on Lichess. The evaluations are Lichess's own Stockfish analysis of each move.
 
 ## Controls
 
@@ -69,7 +69,7 @@ Vitest.
 ```sh
 python3 -m venv tools/.venv && tools/.venv/bin/pip install -r tools/requirements.txt
 tools/.venv/bin/python tools/fetch_positions.py discover             # find broadcast tournaments
-tools/.venv/bin/python tools/fetch_positions.py generate --target 25000
+tools/.venv/bin/python tools/fetch_positions.py generate --target 25000   # appends up to 25,000
 ```
 
 `discover` searches the Lichess broadcast API for finished, top-tier classical tournaments and
