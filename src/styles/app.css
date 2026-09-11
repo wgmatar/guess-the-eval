@@ -1,0 +1,473 @@
+/* Guess The Eval. Dark only; the palette is mirrored in src/ui/palette.ts. */
+
+:root {
+  color-scheme: dark;
+  --bg: #181613;
+  --surface: #332e26;
+  --surface-hover: #3e382f;
+  --text: #f0ede7;
+  --text-2: #9c958a;
+  --guess: #2f6feb;
+  --actual: #66666b;
+  --close: #217a47;
+  --off: #d0453b;
+  --exact: #c8971a;
+  --exact-label: #1c1a17;
+  --bar-white: #f8f8f6;
+  --bar-black: #232323;
+  --bar-outline: rgb(240 237 231 / 0.28);
+  --ease: cubic-bezier(0.25, 0.9, 0.35, 1);
+  --page-ms: 360ms;
+  --reveal-ms: 440ms;
+  --stage-ms: 340ms;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --rounded: ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ease: ease-out;
+    --page-ms: 180ms;
+    --reveal-ms: 220ms;
+    --stage-ms: 180ms;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* The column every coordinate in src/core/layout.ts is measured in. */
+.app {
+  position: relative;
+  width: min(100%, 720px);
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.boot {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-2);
+}
+
+.boot p {
+  margin: 0;
+}
+
+.boot .detail {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.retry {
+  margin-top: 16px;
+  height: 44px;
+}
+
+/* The feed, and Stats one sideways move to its right. */
+.stage-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transition: transform var(--stage-ms) var(--ease);
+  will-change: transform;
+}
+
+.feed,
+.stats-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.page-slot {
+  position: absolute;
+  inset: 0;
+  transition: transform var(--page-ms) var(--ease);
+}
+
+.stage-track.dragging,
+.feed.dragging .page-slot {
+  transition: none;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+}
+
+.title {
+  position: absolute;
+  margin: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-2);
+}
+
+.board {
+  position: absolute;
+  display: block;
+}
+
+/* The eval bar stands beside the board: Black on top, White below. */
+.bar {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bar-white);
+  box-shadow: 0 0 0 0.75px var(--bar-outline);
+}
+
+.bar-black {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--bar-black);
+}
+
+.answered .bar-black {
+  transition: height var(--reveal-ms) var(--ease);
+}
+
+.bubble {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 66px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.5px solid rgb(255 255 255 / 0.22);
+  border-radius: 15px;
+  background: var(--guess);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.22);
+  color: #fff;
+  font: 600 13px/1 var(--rounded);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.answered .bubble {
+  transition:
+    transform var(--reveal-ms) var(--ease),
+    background-color var(--reveal-ms) ease,
+    color var(--reveal-ms) ease;
+}
+
+.bubble.actual {
+  background: var(--actual);
+}
+
+.bubble.close {
+  background: var(--close);
+}
+
+.bubble.off {
+  background: var(--off);
+}
+
+.bubble.exact {
+  background: var(--exact);
+  color: var(--exact-label);
+}
+
+.bubble.pop {
+  animation: pop var(--reveal-ms) var(--ease) both;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* Under the board: the typed guess and Submit, or, once answered, Lichess and Next. */
+.controls {
+  position: absolute;
+  display: flex;
+  gap: 10px;
+}
+
+.capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: 600 17px/1 var(--rounded);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.capsule:hover {
+  background: var(--surface-hover);
+}
+
+.capsule:active {
+  transform: scale(0.98);
+}
+
+.submit,
+.next {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lichess {
+  flex: none;
+  font-size: 15px;
+}
+
+kbd {
+  padding: 3px 5px;
+  border: 1px solid rgb(240 237 231 / 0.22);
+  border-radius: 5px;
+  color: var(--text-2);
+  font: 500 11px/1 var(--sans);
+}
+
+.eval-box {
+  position: relative;
+  flex: none;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--surface);
+  transition: box-shadow 120ms ease;
+}
+
+.eval-box:focus-within {
+  box-shadow: 0 0 0 2px var(--guess);
+}
+
+.eval-box input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: 600 17px/1 var(--rounded);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: manipulation;
+}
+
+.eval-box input::placeholder {
+  color: var(--text-2);
+  opacity: 1;
+}
+
+.eval-box.with-toggle input {
+  padding-right: 52px;
+}
+
+.sign-toggle {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(240 237 231 / 0.1);
+  color: var(--text);
+  font: 600 20px/1 var(--rounded);
+  cursor: pointer;
+}
+
+.hint {
+  position: absolute;
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-2);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.stats-link,
+.text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font: 500 15px/1 var(--sans);
+  cursor: pointer;
+}
+
+.stats-link {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.stats-link:hover,
+.text-button:hover {
+  color: var(--text);
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--guess);
+  outline-offset: 3px;
+}
+
+/* Stats */
+.stats-page {
+  overflow-y: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.stats-inner {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 18px 48px;
+}
+
+.back {
+  height: 32px;
+}
+
+.stats-inner h1 {
+  margin: 12px 0 0;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+.stats-inner h2 {
+  margin: 28px 0 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--surface);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.stats-inner dl {
+  margin: 0;
+}
+
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+}
+
+.stat-row dt {
+  font-size: 17px;
+}
+
+.stat-row dd {
+  margin: 0;
+  font: 600 28px/1.1 var(--rounded);
+  font-variant-numeric: tabular-nums;
+}
+
+.about {
+  margin-top: 44px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.6;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.about p {
+  margin: 0 0 10px;
+}
+
+.about a {
+  color: var(--text);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

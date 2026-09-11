@@ -1,0 +1,8 @@
+dist
+coverage
+tools/.cache
+tools/.venv
+public/positions.json
+src/ui/pieces.ts
+*.md
+tools/broadcast_tours.json
