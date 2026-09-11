@@ -77,7 +77,11 @@ adds them to `tools/broadcast_tours.json`. `generate` downloads each tournament'
 (cached in `tools/.cache/`), samples evaluated positions, validates them, and appends them to
 `public/positions.json`. Existing rows are never changed, because browsers store answered
 positions by index; `--rebuild` with a new `--dataset` name starts over and tells browsers to
-discard that record. Requests are sent one at a time, a second apart, with back-off on 429.
+discard that record. `--out` writes somewhere else, for a trial run. Requests are sent one at
+a time, a second apart, with back-off on 429. Lichess streams large tournament PGNs slowly, so
+`generate` skips discovered sections that cannot yield 2500+ classical games (lower Olympiad
+sections, women's, junior and senior events, weak open groups, non-classical formats);
+`--include-low-yield` keeps them.
 
 `tools/fetch_pieces.py` regenerates `src/ui/pieces.ts` from the Cburnett SVGs.
 

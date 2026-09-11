@@ -49,6 +49,24 @@ SPACING = 1.0  # seconds between requests
 GAME_URL = re.compile(r"^https://lichess\.org/broadcast/[^/]+/[^/]+/\w{8}/\w{8}$")
 SCHEMA = 1
 
+# Tournaments found by `discover` whose names mark a section that yields almost no 2500+ classical
+# games (lower Olympiad sections, women's, junior and senior events, weak open groups) or is not
+# classical chess at all. Each costs minutes to download for nothing. Hand-listed manifest rows
+# (no "source") are never skipped by name; `--include-low-yield` turns the filter off.
+LOW_YIELD = re.compile("|".join([
+    r"\| (?:Open|Women) (?:II|III|IV|V)\b",
+    r"\bWomen|Girls|Femenin|Menchik",
+    r"Cadets|\bunder \d+|\bU\d\d\b|Junior|Senior|Amateur|Tienkamp|College|University|Disabilit|Futures",
+    r"960|Fischer Random|Freestyle|Antichess|Esports|Rapid|Blitz|Fast Standard|Triathlon|Streamer",
+    r"Ladder|Training Match|Battle of Minds|Exchange Matches|Wild Card|Qualification Match",
+    r"Open [B-F]\b|Group [BC]\b|[B-F]-Open|IM Open|Elo - Open|Boards (?:6[5-9]|[7-9]\d|1\d\d|2\d\d)",
+    r"Austrian|SGM|Bundesliga Cup",
+]), re.I)
+
+
+def low_yield(tour: dict) -> bool:
+    return bool(tour.get("source")) and bool(LOW_YIELD.search(tour["event"]))
+
 # Names the broadcasts give without a comma, in the form the press uses. Any other
 # comma-less name (mostly Indian players, e.g. "Nihal Sarin") is kept as broadcast: the
 # app shows such names verbatim, and guessing the surname would be wrong more often than not.
@@ -87,7 +105,7 @@ def http_get(url: str, accept: str) -> bytes:
         if wait > 0:
             time.sleep(wait)
         try:
-            with urllib.request.urlopen(request, timeout=300) as response:
+            with urllib.request.urlopen(request, timeout=900) as response:
                 data = response.read()
             _last_request = time.monotonic()
             return data
@@ -541,8 +559,12 @@ def generate(args):
         tour_of_event[games[g]["ev"]] for g, _, _ in positions if games[g]["ev"] in tour_of_event)
     manifest_changed = False
     all_candidates, tour_stats = [], []
+    low_yield_skipped = 0
     for tour_index, tour in enumerate(manifest):
         if tour.get("skip"):
+            continue
+        if low_yield(tour) and not args.include_low_yield:
+            low_yield_skipped += 1
             continue
         try:
             path = fetch_tour_pgn(tour["id"], args.refresh, args.offline)
@@ -550,6 +572,9 @@ def generate(args):
             log(f"{tour['event']}: 404, marked skip")
             tour["skip"] = "404"
             manifest_changed = True
+            continue
+        except SystemExit as error:  # the network gave up on this tour; the rest can still run
+            log(f"{tour['event']}: download failed ({error}); skipped this run")
             continue
         if path is None:
             continue
@@ -569,6 +594,8 @@ def generate(args):
         tour_stats.append((tour["event"], seen, len(tour_candidates), drops))
         log(f"{tour['event']}: {seen} games, {len(tour_candidates)} candidates")
 
+    if low_yield_skipped:
+        log(f"skipped {low_yield_skipped} low-yield tours by name (--include-low-yield to keep them)")
     if manifest_changed:
         write_manifest(manifest)
 
@@ -621,6 +648,7 @@ def main():
     g.add_argument("--refresh", action="store_true", help="re-download cached PGNs")
     g.add_argument("--rebuild", action="store_true", help="start from an empty file")
     g.add_argument("--offline", action="store_true", help="use cached PGNs only")
+    g.add_argument("--include-low-yield", action="store_true", help="do not skip tours by name")
     g.add_argument("--out", type=Path, default=OUT, help="where to write (default public/positions.json)")
 
     args = parser.parse_args()
