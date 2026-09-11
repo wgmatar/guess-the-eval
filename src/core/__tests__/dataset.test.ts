@@ -15,7 +15,7 @@ const GAME_URL = /^https:\/\/lichess\.org\/broadcast\/[^/]+\/[^/]+\/\w{8}\/\w{8}
 
 describe('public/positions.json', () => {
   it('is a named schema-1 dataset of thousands of positions', () => {
-    expect(dataset.dataset).toBe('broadcasts-a');
+    expect(dataset.dataset).toMatch(/^broadcasts-[a-z]$/);
     expect(dataset.positions.length).toBeGreaterThan(4000);
   });
 

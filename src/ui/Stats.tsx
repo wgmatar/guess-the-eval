@@ -48,7 +48,7 @@ export function Stats({ stats, inert, style, onBack }: Props) {
             close, red is off. A streak counts gold and green.
           </p>
           <p>
-            <kbd>Enter</kbd> submits, then moves on. <kbd>↑</kbd> <kbd>↓</kbd> browse your answers.
+            <kbd>Enter</kbd> submits, then moves on. <kbd>↑</kbd> <kbd>↓</kbd> browse your answers.{' '}
             <kbd>Esc</kbd> closes this page.
           </p>
           <p>
