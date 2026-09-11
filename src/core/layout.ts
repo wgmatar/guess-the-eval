@@ -67,7 +67,8 @@ export function computeLayout(pageW: number, pageH: number, titleLineHeight = 18
 
   // Board and bar are centred as one block when the page has slack in either direction.
   const boardX = Math.round(S.margin + (widthBudget - boardSide) / 2);
-  const offsetY = Math.max(0, Math.floor((pageH - fixedHeight - boardSide) / 2));
+  // Slack is split 40/60, so on a tall phone the board sits a little above centre, near the thumb.
+  const offsetY = Math.max(0, Math.floor((pageH - fixedHeight - boardSide) * 0.4));
   const titleY = S.top + offsetY;
   const boardY = titleY + titleHeight + S.titlePad;
   const barX = boardX + boardSide + BAR_GAP;
