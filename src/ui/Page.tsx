@@ -96,6 +96,9 @@ export function Page(props: Props) {
           ];
   }
 
+  // A reveal in front of the player: gold rings its bubble and sweeps a light up the bar.
+  const cheer = mountedLive && answered ? accuracy : null;
+
   const url = answered ? lichessUrl(position) : null;
   const turn = sideLabel(position);
   const hintTop = l.controls.y + l.controls.height + 18;
@@ -129,7 +132,11 @@ export function Page(props: Props) {
         y={l.board.y}
         flipped={flipped}
       />
-      <div className={flipped ? 'bar flipped' : 'bar'} style={rectStyle(l.bar)} aria-hidden="true">
+      <div
+        className={`bar${flipped ? ' flipped' : ''}${cheer === 'exact' ? ' shimmer' : ''}`}
+        style={rectStyle(l.bar)}
+        aria-hidden="true"
+      >
         <div
           className="bar-black"
           style={{ height: `${(flipped ? 1 - dividerTop : dividerTop) * 100}%` }}
@@ -140,7 +147,7 @@ export function Page(props: Props) {
         return (
           <div
             key={b.key}
-            className={`bubble ${b.kind}${b.pop ? ' pop' : ''}`}
+            className={`bubble ${b.kind}${b.pop ? ' pop' : ''}${cheer && b.key === 'guess' && cheer !== 'off' ? ` cheer-${cheer}` : ''}`}
             style={{
               transform: `translate3d(${c.x - SIZES.bubbleW / 2}px, ${c.y - SIZES.bubbleH / 2}px, 0)`,
             }}

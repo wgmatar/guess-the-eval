@@ -24,6 +24,7 @@ beforeAll(() => {
     get: () => 800,
   });
   HTMLElement.prototype.setPointerCapture = () => {};
+  HTMLCanvasElement.prototype.getContext = (() => null) as never;
   window.matchMedia = ((query: string) => ({
     matches: query.includes('pointer: fine'),
     media: query,
@@ -131,6 +132,28 @@ describe('Game sound', () => {
     await wait(20);
     fireEvent.keyDown(input(), { key: 'Enter' });
     expect(model.getState().historyCount).toBe(1);
+  });
+});
+
+describe('Game reveal effects', () => {
+  it('rings gold on the live page only, and never holds up Enter', async () => {
+    const { model, input } = setup();
+    await wait(20);
+    fireEvent.change(input(), { target: { value: '1.3' } });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(model.page(0)?.accuracy).toBe('exact');
+    expect(document.querySelector('.bubble.cheer-exact')).not.toBeNull();
+    expect(document.querySelector('.bar.shimmer')).not.toBeNull();
+    expect(document.querySelector('canvas.effects')).not.toBeNull();
+    await wait(260);
+    fireEvent.keyDown(document.body, { key: 'Enter' });
+    expect(model.getState().visible).toBe(1);
+    // Paging back remounts the answered page as history: no ring, no sweep.
+    await wait(260);
+    fireEvent.change(input(), { target: { value: '1.2' } });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(model.page(1)?.accuracy).toBe('close');
+    expect(document.querySelector('.bubble.cheer-close')).not.toBeNull();
   });
 });
 

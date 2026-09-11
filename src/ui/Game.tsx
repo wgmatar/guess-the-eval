@@ -1,4 +1,12 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { barFraction, whiteFractionForBar } from '../core/barMapping';
 import {
   classifyDrag,
@@ -33,6 +41,7 @@ import {
 import type { Accuracy } from '../core/accuracy';
 import type { FeedModel } from '../store/feedModel';
 import type { SoundSetting } from '../store/soundSetting';
+import { Confetti } from './effects';
 import { useElementSize, useMediaQuery, useSettled } from './hooks';
 import { Page } from './Page';
 import { PieceDefs } from './PieceDefs';
@@ -114,9 +123,25 @@ export function Game({
   const [drawing, setDrawing] = useState<Drawing | null>(null);
   const [soundOn, setSoundOn] = useState(sound.on);
 
-  /** The live page was just answered, in front of the player, inside their key press or click. */
-  const reveal = (accuracy: Accuracy) => {
+  const confetti = useRef<Confetti | null>(null);
+  const effectsCanvas = useCallback((canvas: HTMLCanvasElement | null) => {
+    if (!canvas) return;
+    const c = new Confetti(canvas);
+    confetti.current = c;
+    return () => {
+      c.stop();
+      confetti.current = null;
+    };
+  }, []);
+
+  /**
+   * The live page was just answered, in front of the player, inside their key press or click.
+   * Nothing here is awaited: Enter and Next never wait for a sound or a burst.
+   */
+  const reveal = (accuracy: Accuracy, from: { x: number; y: number } | null) => {
     if (sound.on) playReveal(accuracy);
+    if (accuracy !== 'off' && from && !reducedMotion)
+      confetti.current?.fire(accuracy, from.x, from.y);
   };
 
   const toggleSound = () => {
@@ -129,8 +154,14 @@ export function Game({
     const s = model.getState();
     if (now < lockUntil.current || stage !== 'feed' || s.visible !== s.historyCount) return;
     lockUntil.current = now + SUBMIT_LOCK_MS;
+    // The burst leaves from the guess bubble.
+    const live = model.page(s.historyCount);
+    const from =
+      layout && live
+        ? bubbleCenter(layout, barFraction(s.liveGuess, live.position.sideToMove === 'b'))
+        : null;
     const accuracy = model.submit();
-    if (accuracy) reveal(accuracy);
+    if (accuracy) reveal(accuracy, from);
   };
 
   const pageTo = (target: number) => {
@@ -497,6 +528,7 @@ export function Game({
           />
         </div>
       )}
+      <canvas className="effects" ref={effectsCanvas} aria-hidden="true" />
     </div>
   );
 }

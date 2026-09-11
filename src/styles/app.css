@@ -195,6 +195,16 @@ body {
   display: block;
 }
 
+/* Confetti, over everything, never in the way. */
+.effects {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
 /* Arrows and circles, above the board; they never take the pointer. */
 .shapes {
   position: absolute;
@@ -275,6 +285,60 @@ body {
 
 .bubble.pop {
   animation: pop var(--reveal-ms) var(--ease) both;
+}
+
+/* Gold: the bubble rings once and a light sweeps up the bar. */
+.bubble.cheer-exact {
+  animation: ring 1100ms ease-out 60ms both;
+}
+
+@keyframes ring {
+  0% {
+    scale: 1;
+    box-shadow:
+      0 0 0 0 rgb(247 215 116 / 0.95),
+      0 0 0 0 rgb(232 185 58 / 0.7);
+  }
+  25% {
+    scale: 1.14;
+  }
+  55% {
+    scale: 1;
+    box-shadow:
+      0 0 0 12px rgb(247 215 116 / 0),
+      0 0 22px 6px rgb(232 185 58 / 0.55);
+  }
+  100% {
+    scale: 1;
+    box-shadow:
+      0 0 0 16px rgb(247 215 116 / 0),
+      0 1px 4px rgb(0 0 0 / 0.22);
+  }
+}
+
+.bar.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    0deg,
+    transparent 0%,
+    rgb(247 215 116 / 0) 38%,
+    rgb(247 215 116 / 0.85) 50%,
+    rgb(247 215 116 / 0) 62%,
+    transparent 100%
+  );
+  background-size: 100% 300%;
+  animation: shimmer 900ms var(--ease) 100ms both;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 0 0%;
+  }
+  to {
+    background-position: 0 100%;
+  }
 }
 
 @keyframes pop {
@@ -540,4 +604,37 @@ a:focus-visible {
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/* Reduced motion: no particles and no sweep, only a brief glow on a good guess. */
+@media (prefers-reduced-motion: reduce) {
+  .bar.shimmer::after {
+    display: none;
+  }
+
+  .bubble.cheer-exact {
+    animation: glow-gold 450ms ease-out both;
+  }
+
+  .bubble.cheer-close {
+    animation: glow-green 450ms ease-out both;
+  }
+}
+
+@keyframes glow-gold {
+  from {
+    box-shadow: 0 0 16px 5px rgb(232 185 58 / 0.85);
+  }
+  to {
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.22);
+  }
+}
+
+@keyframes glow-green {
+  from {
+    box-shadow: 0 0 14px 4px rgb(47 168 100 / 0.8);
+  }
+  to {
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.22);
+  }
 }
