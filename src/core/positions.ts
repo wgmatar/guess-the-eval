@@ -38,6 +38,7 @@ export interface Position {
   readonly opening: string | null;
   readonly event: string | null;
   readonly moveNumber: number | null;
+  readonly sideToMove: 'w' | 'b' | null;
   readonly ply: number | null;
   readonly gameUrl: string | null;
 }
@@ -85,6 +86,7 @@ export function decodePosition(dataset: Dataset, index: number): Position | null
     opening: text(game.op),
     event: text(game.ev),
     moveNumber: meta?.moveNumber ?? null,
+    sideToMove: meta?.sideToMove ?? null,
     ply: meta?.ply ?? null,
     gameUrl: url && LICHESS.test(url) ? url : null,
   };
@@ -134,14 +136,23 @@ export function shortName(raw: string): string {
   return `${[...first][0]}. ${last}`;
 }
 
-/** `T. Radjabov (2753) vs R. Rapport (2764), 2022 — Sicilian · move 17`; each part optional. */
+/** `T. Radjabov (2753) vs R. Rapport (2764), 2022 — Sicilian`; each part optional. */
 export function positionTitle(p: Position): string {
   const rating = (elo: number | null) => (elo === null ? '' : ` (${elo})`);
   let line = `${shortName(p.white)}${rating(p.whiteElo)} vs ${shortName(p.black)}${rating(p.blackElo)}`;
   if (p.year !== null) line += `, ${p.year}`;
   if (p.opening) line += ` — ${p.opening}`;
-  if (p.moveNumber !== null) line += ` · move ${p.moveNumber}`;
   return line;
+}
+
+/**
+ * `White to move` or `Black to move`. The board never flips, so this is the only cue whose turn
+ * it is; it matters, because having the move is often worth a lot in the evaluation.
+ */
+export function sideLabel(p: Position): string | null {
+  if (p.sideToMove === 'w') return 'White to move';
+  if (p.sideToMove === 'b') return 'Black to move';
+  return null;
 }
 
 /** The source game on Lichess, opened at this position's move. */

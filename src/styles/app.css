@@ -142,17 +142,52 @@ body {
   inset: 0;
 }
 
-.title {
+/* Three reserved lines: the game on up to two, whose move it is always on the last. */
+.title-block {
   position: absolute;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-2);
+}
+
+.title {
   margin: 0;
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--text-2);
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.turn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.turn .side {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.swatch {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.swatch.w {
+  background: var(--bar-white);
+}
+
+.swatch.b {
+  background: var(--bar-black);
+  box-shadow: 0 0 0 1px rgb(240 237 231 / 0.5);
 }
 
 .board {

@@ -4,7 +4,7 @@ import { topFraction } from '../core/barMapping';
 import { resolveBubbles } from '../core/bubbleLayout';
 import { display, spoken, type Eval } from '../core/eval';
 import { bubbleCenter, SIZES, type PageLayout } from '../core/layout';
-import { lichessUrl, positionTitle } from '../core/positions';
+import { lichessUrl, positionTitle, sideLabel } from '../core/positions';
 import type { PageState } from '../store/feedModel';
 import { Board } from './Board';
 import { GuessInput } from './GuessInput';
@@ -90,21 +90,28 @@ export function Page(props: Props) {
   }
 
   const url = answered ? lichessUrl(position) : null;
-  const side = position.fen.split(' ')[1] === 'b' ? 'Black' : 'White';
+  const turn = sideLabel(position);
   const hintTop = l.controls.y + l.controls.height + 18;
   const hintFits = hintTop + 40 <= l.pageH;
 
   return (
     <div className={answered ? 'page answered' : 'page live'}>
-      <p className="title" style={rectStyle(l.title)}>
-        {positionTitle(position)}
-      </p>
+      <div className="title-block" style={rectStyle(l.title)}>
+        <p className="title">{positionTitle(position)}</p>
+        {turn && (
+          <p className="turn">
+            <span className={`swatch ${position.sideToMove}`} aria-hidden="true" />
+            <span className="side">{turn}</span>
+            {position.moveNumber !== null && <span>· move {position.moveNumber}</span>}
+          </p>
+        )}
+      </div>
       <Board
         board={position.board}
         size={l.board.width}
         x={l.board.x}
         y={l.board.y}
-        label={`Chess position, ${side} to move`}
+        label={`Chess position, ${turn ?? 'side to move unknown'}`}
       />
       <div className="bar" style={rectStyle(l.bar)} aria-hidden="true">
         <div className="bar-black" style={{ height: `${dividerTop * 100}%` }} />

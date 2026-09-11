@@ -7,6 +7,7 @@ import {
   PositionSource,
   positionTitle,
   shortName,
+  sideLabel,
   type Dataset,
 } from '../positions';
 
@@ -48,14 +49,14 @@ describe('positions', () => {
   it('composes the title with the iOS punctuation', () => {
     const p = decodePosition(dataset, 0);
     expect(p && positionTitle(p)).toBe(
-      'T. Radjabov (2753) vs R. Rapport (2764), 2022 — Sicilian, Taimanov variation · move 17',
+      'T. Radjabov (2753) vs R. Rapport (2764), 2022 — Sicilian, Taimanov variation',
     );
   });
 
   it('drops missing metadata cleanly', () => {
     const p = decodePosition(dataset, 1);
     expect(p?.eval).toEqual(mate(-3));
-    expect(p && positionTitle(p)).toBe('B. A vs D. C · move 1');
+    expect(p && positionTitle(p)).toBe('B. A vs D. C');
     expect(p && lichessUrl(p)).toBeNull();
   });
 
@@ -63,6 +64,14 @@ describe('positions', () => {
     const p = decodePosition(dataset, 0);
     expect(p?.eval).toEqual(pawns(0.35));
     expect(p && lichessUrl(p)).toBe(`${URL}#33`);
+  });
+
+  it('says whose move it is, with the move number alongside', () => {
+    const black = decodePosition(dataset, 0);
+    const white = decodePosition(dataset, 1);
+    expect(black && sideLabel(black)).toBe('Black to move');
+    expect(black?.moveNumber).toBe(17);
+    expect(white && sideLabel(white)).toBe('White to move');
   });
 
   it('skips rows that do not decode', () => {
