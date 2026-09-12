@@ -63,9 +63,11 @@ export function Stats({ stats, inert, style, onBack, soundOn, onToggleSound }: P
 
         <div className="about">
           <p>
-            Every position comes from an elite classical game broadcast on Lichess. The evaluation
-            is Lichess’s Stockfish analysis, in pawns from White’s side. Gold is spot on, green is
-            close, red is off. A streak counts gold and green.
+            Every position comes from an elite classical game: broadcasts on Lichess, evaluated by
+            Lichess’s Stockfish, and top tournaments from 2000 to 2019 from the Lichess masters
+            database and PGN Mentor, evaluated by Stockfish offline. The evaluation is in pawns from
+            White’s side. Gold is spot on, green is close, red is off. A streak counts gold and
+            green.
           </p>
           <p>
             <kbd>Enter</kbd> submits, then moves on. <kbd>↑</kbd> <kbd>↓</kbd> browse your answers.{' '}

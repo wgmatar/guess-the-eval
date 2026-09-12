@@ -27,6 +27,7 @@ const dataset: Dataset = {
       url: URL,
     },
     { w: 'A, B', b: 'C, D' },
+    { w: 'E, F', b: 'G, H', src: 'masters', url: 'https://lichess.org/3IjC40lK' },
   ],
   positions: [
     [0, '8/8/8/8/8/8/8/8 b - - 3 17', 0.35],
@@ -34,6 +35,7 @@ const dataset: Dataset = {
     [5, '8/8/8/8/8/8/8/8 w - - 0 1', 0.1],
     [0, '8/8/8/8/8/8/8/8 w - - 0 1', 'x'],
     'nonsense',
+    [2, '8/8/8/8/8/8/8/8 b - - 0 20', 0.8],
   ],
 };
 
@@ -57,7 +59,17 @@ describe('positions', () => {
     const p = decodePosition(dataset, 1);
     expect(p?.eval).toEqual(mate(-3));
     expect(p && positionTitle(p)).toBe('B. A vs D. C');
-    expect(p && lichessUrl(p)).toBeNull();
+    // No game on Lichess: its analysis board at this exact position instead.
+    expect(p && lichessUrl(p)).toBe(
+      'https://lichess.org/analysis/standard/8/8/8/8/8/8/8/8_w_-_-_0_1',
+    );
+    expect(p?.source).toBe('broadcast');
+  });
+
+  it('links a masters game to its Lichess page at the ply', () => {
+    const p = decodePosition(dataset, 5);
+    expect(p?.source).toBe('masters');
+    expect(p && lichessUrl(p)).toBe('https://lichess.org/3IjC40lK#39');
   });
 
   it('links to the source game at the position’s ply', () => {
@@ -82,10 +94,10 @@ describe('positions', () => {
 
   it('memoises and bounds the cache', () => {
     const source = new PositionSource(dataset);
-    expect(source.count).toBe(5);
+    expect(source.count).toBe(6);
     expect(source.position(0)).toBe(source.position(0));
     expect(source.position(-1)).toBeNull();
-    expect(source.position(5)).toBeNull();
+    expect(source.position(6)).toBeNull();
   });
 
   it('rejects a malformed envelope', () => {

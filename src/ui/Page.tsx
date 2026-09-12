@@ -160,7 +160,7 @@ export function Page(props: Props) {
 
       {answered ? (
         <div className="controls" style={rectStyle(l.controls)}>
-          {url ? (
+          {url && (
             <a
               className="capsule lichess"
               style={{ width: l.input.width }}
@@ -172,8 +172,6 @@ export function Page(props: Props) {
             >
               Lichess ↗
             </a>
-          ) : (
-            <span style={{ width: l.input.width }} />
           )}
           <button type="button" className="capsule next" onClick={props.onNext}>
             Next

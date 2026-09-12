@@ -15,6 +15,8 @@ export interface GameRow {
   readonly ev?: unknown;
   readonly eco?: unknown;
   readonly op?: unknown;
+  /** Absent on broadcast games; `masters` for the Lichess masters database. */
+  readonly src?: unknown;
   readonly url?: unknown;
 }
 
@@ -41,6 +43,8 @@ export interface Position {
   readonly sideToMove: 'w' | 'b' | null;
   readonly ply: number | null;
   readonly gameUrl: string | null;
+  /** Where the game came from: `broadcast` (the default) or `masters`. */
+  readonly source: string;
 }
 
 /** Checks the envelope; individual rows are checked lazily, and a bad one is skipped. */
@@ -89,6 +93,7 @@ export function decodePosition(dataset: Dataset, index: number): Position | null
     sideToMove: meta?.sideToMove ?? null,
     ply: meta?.ply ?? null,
     gameUrl: url && LICHESS.test(url) ? url : null,
+    source: text(game.src) ?? 'broadcast',
   };
 }
 
@@ -155,8 +160,12 @@ export function sideLabel(p: Position): string | null {
   return null;
 }
 
-/** The source game on Lichess, opened at this position's move. */
-export function lichessUrl(p: Position): string | null {
-  if (!p.gameUrl) return null;
+/**
+ * The source game on Lichess, opened at this position's move; for a game Lichess does not
+ * host, its analysis board at this exact position.
+ */
+export function lichessUrl(p: Position): string {
+  if (!p.gameUrl)
+    return `https://lichess.org/analysis/standard/${p.fen.trim().replace(/\s+/g, '_')}`;
   return p.ply === null ? p.gameUrl : `${p.gameUrl}#${p.ply}`;
 }
